@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-const PASSWORD = "science123";
+const PASSWORD = "science123"; // change this
 
 const DEFAULT_ABOUT = "I'm Arvin. I write about cool science I come across — mostly virology, immunology, and molecular biology. No hype, just the interesting stuff.";
 const DEFAULT_BLOG_NAME = "Arvin's Science Log";
@@ -33,36 +33,32 @@ export default function Blog() {
   const [blogNameDraft, setBlogNameDraft] = useState("");
   const [loaded, setLoaded] = useState(false);
 
-  // new post
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
   const [newImage, setNewImage] = useState("");
   const [newDate, setNewDate] = useState("");
 
-  // edit post
   const [editDraft, setEditDraft] = useState(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const r = await window.storage.get("posts-v4", true);
-        if (r?.value) setPosts(JSON.parse(r.value));
-      } catch (_) {}
-      try {
-        const r = await window.storage.get("about-v1", true);
-        if (r?.value) setAbout(r.value);
-      } catch (_) {}
-      try {
-        const r = await window.storage.get("blogname-v1", true);
-        if (r?.value) setBlogName(r.value);
-      } catch (_) {}
-      setLoaded(true);
-    })();
+    try {
+      const p = localStorage.getItem("posts-v4");
+      if (p) setPosts(JSON.parse(p));
+    } catch (_) {}
+    try {
+      const a = localStorage.getItem("about-v1");
+      if (a) setAbout(a);
+    } catch (_) {}
+    try {
+      const b = localStorage.getItem("blogname-v1");
+      if (b) setBlogName(b);
+    } catch (_) {}
+    setLoaded(true);
   }, []);
 
-  const savePosts = async (updated) => {
+  const savePosts = (updated) => {
     setPosts(updated);
-    try { await window.storage.set("posts-v4", JSON.stringify(updated), true); } catch (_) {}
+    try { localStorage.setItem("posts-v4", JSON.stringify(updated)); } catch (_) {}
   };
 
   const today = () => new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -125,7 +121,6 @@ export default function Blog() {
 
       <div style={s.wrap}>
 
-        {/* Header */}
         <header style={s.header}>
           <div style={s.nameArea}>
             {editingBlogName && authed ? (
@@ -139,7 +134,7 @@ export default function Blog() {
                     if (e.key === "Enter") {
                       const val = blogNameDraft.trim() || DEFAULT_BLOG_NAME;
                       setBlogName(val);
-                      window.storage.set("blogname-v1", val, true).catch(() => {});
+                      localStorage.setItem("blogname-v1", val);
                       setEditingBlogName(false);
                     }
                     if (e.key === "Escape") setEditingBlogName(false);
@@ -148,17 +143,13 @@ export default function Blog() {
                 <button className="subtle-btn" onClick={() => {
                   const val = blogNameDraft.trim() || DEFAULT_BLOG_NAME;
                   setBlogName(val);
-                  window.storage.set("blogname-v1", val, true).catch(() => {});
+                  localStorage.setItem("blogname-v1", val);
                   setEditingBlogName(false);
                 }}>Save</button>
                 <button className="subtle-btn" onClick={() => setEditingBlogName(false)}>Cancel</button>
               </div>
             ) : (
-              <span
-                style={s.name}
-                onClick={() => setView("feed")}
-                title={authed ? "Click to edit blog name" : ""}
-              >
+              <span style={s.name} onClick={() => setView("feed")}>
                 {blogName}
                 {authed && (
                   <span
@@ -182,7 +173,6 @@ export default function Blog() {
           </div>
         </header>
 
-        {/* Password */}
         {showPw && !authed && (
           <div style={s.pwBox}>
             <input
@@ -197,7 +187,6 @@ export default function Blog() {
           </div>
         )}
 
-        {/* About */}
         {view === "about" && (
           <div style={s.section}>
             <h2 style={s.sectionHeading}>About</h2>
@@ -213,7 +202,7 @@ export default function Blog() {
                   <button style={{ ...s.btn, ...s.darkBtn }} onClick={() => {
                     const val = aboutDraft.trim() || DEFAULT_ABOUT;
                     setAbout(val);
-                    window.storage.set("about-v1", val, true).catch(() => {});
+                    localStorage.setItem("about-v1", val);
                     setEditingAbout(false);
                   }}>Save</button>
                   <button style={s.btn} onClick={() => setEditingAbout(false)}>Cancel</button>
@@ -230,7 +219,6 @@ export default function Blog() {
           </div>
         )}
 
-        {/* New post */}
         {view === "new" && authed && (
           <div style={s.section}>
             <div style={s.fieldGroup}>
@@ -254,7 +242,6 @@ export default function Blog() {
           </div>
         )}
 
-        {/* Edit post */}
         {view === "edit" && editDraft && authed && (
           <div style={s.section}>
             <button className="subtle-btn" style={{ marginBottom: 28 }} onClick={() => { setEditDraft(null); setView("post"); }}>← Cancel</button>
@@ -279,7 +266,6 @@ export default function Blog() {
           </div>
         )}
 
-        {/* Post detail */}
         {view === "post" && active && (
           <div>
             <button className="subtle-btn" style={{ marginBottom: 32 }} onClick={() => setView("feed")}>← Back</button>
@@ -296,7 +282,6 @@ export default function Blog() {
           </div>
         )}
 
-        {/* Feed */}
         {view === "feed" && (
           <div>
             {posts.length === 0 && <p style={{ fontSize: 14, color: "#aaa", paddingTop: 20 }}>No posts yet.</p>}
@@ -363,6 +348,7 @@ const s = {
   cardDate: { fontSize: 12, color: "#999", marginBottom: 8, fontWeight: 300 },
   cardTitle: { fontFamily: "'Lora', serif", fontSize: 20, fontWeight: 600, color: "#1a1a1a", lineHeight: 1.35, marginBottom: 10 },
   cardExcerpt: { fontSize: 14, color: "#666", lineHeight: 1.7, fontWeight: 300 },
+  back: { background: "none", border: "none", fontSize: 13, color: "#999", cursor: "pointer", marginBottom: 32, padding: 0 },
   detailDate: { fontSize: 12, color: "#999", marginBottom: 12, fontWeight: 300 },
   detailTitle: { fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 600, color: "#1a1a1a", lineHeight: 1.3, marginBottom: 24 },
   detailImg: { width: "100%", borderRadius: 6, marginBottom: 28, display: "block" },
