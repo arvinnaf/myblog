@@ -56,7 +56,7 @@ export default function Blog() {
     setLoaded(true);
   }, []);
 
-  const savePosts = (updated) => {
+const savePosts = (updated: any) => {
     setPosts(updated);
     try { localStorage.setItem("posts-v4", JSON.stringify(updated)); } catch (_) {}
   };
