@@ -1,24 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = "https://veikhurthazspqtilwjp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlaWtodXJ0aGF6c3BxdGlsd2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTIwMzcsImV4cCI6MjA5NTU2ODAzN30.YFCxPdCTX_HhBXecLlzTKKeSK9Z7roTb4b80z0A8-KE";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const PASSWORD = "science123"; // change this
 
 const DEFAULT_ABOUT = "I'm Arvin. I write about cool science I come across — mostly virology, immunology, and molecular biology. No hype, just the interesting stuff.";
 const DEFAULT_BLOG_NAME = "Arvin's Science Log";
 
-const SAMPLE = [
-  {
-    id: 1,
-    title: "HIV capsids are more dynamic than we thought",
-    body: "Live-cell imaging is showing that the capsid core doesn't just passively uncoat — it actively engages the nuclear pore complex, and timing matters enormously. Really elegant work out of the Bhatt lab.",
-    date: "May 28, 2026",
-    image: "",
-  },
-];
-
 export default function Blog() {
-  const [posts, setPosts] = useState(SAMPLE);
+  const [posts, setPosts] = useState([]);
   const [view, setView] = useState("feed");
   const [active, setActive] = useState(null);
   const [authed, setAuthed] = useState(false);
@@ -32,62 +27,61 @@ export default function Blog() {
   const [editingBlogName, setEditingBlogName] = useState(false);
   const [blogNameDraft, setBlogNameDraft] = useState("");
   const [loaded, setLoaded] = useState(false);
-
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
   const [newImage, setNewImage] = useState("");
   const [newDate, setNewDate] = useState("");
-
   const [editDraft, setEditDraft] = useState(null);
 
   useEffect(() => {
-    try {
-      const p = localStorage.getItem("posts-v4");
-      if (p) setPosts(JSON.parse(p));
-    } catch (_) {}
-    try {
-      const a = localStorage.getItem("about-v1");
-      if (a) setAbout(a);
-    } catch (_) {}
-    try {
-      const b = localStorage.getItem("blogname-v1");
-      if (b) setBlogName(b);
-    } catch (_) {}
-    setLoaded(true);
+    fetchPosts();
+    const a = localStorage.getItem("about-v1");
+    if (a) setAbout(a);
+    const b = localStorage.getItem("blogname-v1");
+    if (b) setBlogName(b);
   }, []);
 
-  const savePosts = (updated) => {
-    setPosts(updated);
-    try { localStorage.setItem("posts-v4", JSON.stringify(updated)); } catch (_) {}
+  const fetchPosts = async () => {
+    const { data } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+    if (data) setPosts(data);
+    setLoaded(true);
   };
 
   const today = () => new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
-  const publish = () => {
+  const publish = async () => {
     if (!newTitle.trim() || !newBody.trim()) return;
     const post = {
-      id: Date.now(),
       title: newTitle.trim(),
       body: newBody.trim(),
       image: newImage.trim(),
       date: newDate.trim() || today(),
     };
-    savePosts([post, ...posts]);
+    const { data } = await supabase.from("posts").insert([post]).select();
+    if (data) setPosts([data[0], ...posts]);
     setNewTitle(""); setNewBody(""); setNewImage(""); setNewDate("");
     setView("feed");
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editDraft.title.trim() || !editDraft.body.trim()) return;
-    const updated = posts.map((p) => p.id === editDraft.id ? { ...editDraft } : p);
-    savePosts(updated);
-    setActive({ ...editDraft });
+    const { data } = await supabase.from("posts").update({
+      title: editDraft.title,
+      body: editDraft.body,
+      date: editDraft.date,
+      image: editDraft.image,
+    }).eq("id", editDraft.id).select();
+    if (data) {
+      setPosts(posts.map((p) => p.id === editDraft.id ? data[0] : p));
+      setActive(data[0]);
+    }
     setEditDraft(null);
     setView("post");
   };
 
-  const del = (id) => {
-    savePosts(posts.filter((p) => p.id !== id));
+  const del = async (id) => {
+    await supabase.from("posts").delete().eq("id", id);
+    setPosts(posts.filter((p) => p.id !== id));
     setView("feed");
     setActive(null);
   };
@@ -237,7 +231,7 @@ export default function Blog() {
               <label style={s.label}>Image URL <span style={s.labelNote}>(optional)</span></label>
               <input style={s.lineInput} placeholder="https://..." value={newImage} onChange={(e) => setNewImage(e.target.value)} />
             </div>
-            {newImage && <img src={newImage} alt="" style={s.imgPreview} onError={(e) => e.target.style.display = "none"} />}
+            {newImage && <img src={newImage} alt="" style={s.imgPreview} onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; }} />}
             <button style={{ ...s.btn, ...s.darkBtn, opacity: newTitle && newBody ? 1 : 0.4 }} onClick={publish}>Publish</button>
           </div>
         )}
@@ -261,7 +255,7 @@ export default function Blog() {
               <label style={s.label}>Image URL <span style={s.labelNote}>(optional)</span></label>
               <input style={s.lineInput} value={editDraft.image} onChange={(e) => setEditDraft({ ...editDraft, image: e.target.value })} />
             </div>
-            {editDraft.image && <img src={editDraft.image} alt="" style={s.imgPreview} onError={(e) => e.target.style.display = "none"} />}
+            {editDraft.image && <img src={editDraft.image} alt="" style={s.imgPreview} onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; }} />}
             <button style={{ ...s.btn, ...s.darkBtn, opacity: editDraft.title && editDraft.body ? 1 : 0.4 }} onClick={saveEdit}>Save changes</button>
           </div>
         )}
@@ -271,7 +265,7 @@ export default function Blog() {
             <button className="subtle-btn" style={{ marginBottom: 32 }} onClick={() => setView("feed")}>← Back</button>
             <p style={s.detailDate}>{active.date}</p>
             <h1 style={s.detailTitle}>{active.title}</h1>
-            {active.image && <img src={active.image} alt="" style={s.detailImg} onError={(e) => e.target.style.display = "none"} />}
+            {active.image && <img src={active.image} alt="" style={s.detailImg} onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; }} />}
             <p style={s.bodyText}>{active.body}</p>
             {authed && (
               <div style={{ display: "flex", gap: 20, marginTop: 48 }}>
@@ -287,7 +281,7 @@ export default function Blog() {
             {posts.length === 0 && <p style={{ fontSize: 14, color: "#aaa", paddingTop: 20 }}>No posts yet.</p>}
             {posts.map((p) => (
               <div key={p.id} className="card" style={s.card} onClick={() => { setActive(p); setView("post"); }}>
-                {p.image && <img src={p.image} alt="" style={s.cardImg} onError={(e) => e.target.style.display = "none"} />}
+                {p.image && <img src={p.image} alt="" style={s.cardImg} onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; }} />}
                 <p style={s.cardDate}>{p.date}</p>
                 <h2 style={s.cardTitle}>{p.title}</h2>
                 <p style={s.cardExcerpt}>{p.body.slice(0, 160)}{p.body.length > 160 ? "..." : ""}</p>
@@ -348,9 +342,8 @@ const s = {
   cardDate: { fontSize: 12, color: "#999", marginBottom: 8, fontWeight: 300 },
   cardTitle: { fontFamily: "'Lora', serif", fontSize: 20, fontWeight: 600, color: "#1a1a1a", lineHeight: 1.35, marginBottom: 10 },
   cardExcerpt: { fontSize: 14, color: "#666", lineHeight: 1.7, fontWeight: 300 },
-  back: { background: "none", border: "none", fontSize: 13, color: "#999", cursor: "pointer", marginBottom: 32, padding: 0 },
   detailDate: { fontSize: 12, color: "#999", marginBottom: 12, fontWeight: 300 },
   detailTitle: { fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 600, color: "#1a1a1a", lineHeight: 1.3, marginBottom: 24 },
   detailImg: { width: "100%", borderRadius: 6, marginBottom: 28, display: "block" },
   bodyText: { fontSize: 15, color: "#444", lineHeight: 1.85, fontWeight: 300, whiteSpace: "pre-wrap" },
-};
+};s
