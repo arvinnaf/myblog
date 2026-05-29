@@ -13,7 +13,7 @@ const DEFAULT_ABOUT = "I'm Arvin. I write about cool science I come across — m
 const DEFAULT_BLOG_NAME = "Arvin's Science Log";
 
 export default function Blog() {
-  const [posts, setPosts] = useState([]);
+  const [Posts, setPosts] = useState([]);
   const [view, setView] = useState("feed");
   const [active, setActive] = useState(null);
   const [authed, setAuthed] = useState(false);
@@ -42,7 +42,7 @@ export default function Blog() {
   }, []);
 
   const fetchPosts = async () => {
-    const { data } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("Posts").select("*").order("created_at", { ascending: false });
     if (data) setPosts(data);
     setLoaded(true);
   };
@@ -57,22 +57,22 @@ export default function Blog() {
       image: newImage.trim(),
       date: newDate.trim() || today(),
     };
-    const { data } = await supabase.from("posts").insert([post]).select();
-    if (data) setPosts([data[0], ...posts]);
+    const { data } = await supabase.from("Posts").insert([Post]).select();
+    if (data) setPosts([data[0], ...Posts]);
     setNewTitle(""); setNewBody(""); setNewImage(""); setNewDate("");
     setView("feed");
   };
 
   const saveEdit = async () => {
     if (!editDraft.title.trim() || !editDraft.body.trim()) return;
-    const { data } = await supabase.from("posts").update({
+    const { data } = await supabase.from("Posts").update({
       title: editDraft.title,
       body: editDraft.body,
       date: editDraft.date,
       image: editDraft.image,
     }).eq("id", editDraft.id).select();
     if (data) {
-      setPosts(posts.map((p) => p.id === editDraft.id ? data[0] : p));
+      setPosts(Posts.map((p) => p.id === editDraft.id ? data[0] : p));
       setActive(data[0]);
     }
     setEditDraft(null);
@@ -80,8 +80,8 @@ export default function Blog() {
   };
 
   const del = async (id) => {
-    await supabase.from("posts").delete().eq("id", id);
-    setPosts(posts.filter((p) => p.id !== id));
+    await supabase.from("Posts").delete().eq("id", id);
+    setPosts(Posts.filter((p) => p.id !== id));
     setView("feed");
     setActive(null);
   };
@@ -278,8 +278,8 @@ export default function Blog() {
 
         {view === "feed" && (
           <div>
-            {posts.length === 0 && <p style={{ fontSize: 14, color: "#aaa", paddingTop: 20 }}>No posts yet.</p>}
-            {posts.map((p) => (
+            {Posts.length === 0 && <p style={{ fontSize: 14, color: "#aaa", paddingTop: 20 }}>No Posts yet.</p>}
+            {Posts.map((p) => (
               <div key={p.id} className="card" style={s.card} onClick={() => { setActive(p); setView("post"); }}>
                 {p.image && <img src={p.image} alt="" style={s.cardImg} onError={(e) => { e.target.style.display = "none"; }} />}
                 <p style={s.cardDate}>{p.date}</p>
