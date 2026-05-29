@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://veikhurthazspqtilwjp.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlaWtodXJ0aGF6c3BxdGlsd2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTIwMzcsImV4cCI6MjA5NTU2ODAzN30.YFCxPdCTX_HhBXecLlzTKKeSK9Z7roTb4b80z0A8-KE";
+const SUPABASE_ANON_KEY = "sb_publishable_Y9cQqYunPiO2N5yZWwJa5Q_FtdFY4Pe";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const PASSWORD = "science123"; // change this
