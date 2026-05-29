@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://veikhurthazspqtilwjp.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_Y9cQqYunPiO2N5yZWwJa5Q_FtdFY4Pe";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlaWtodXJ0aGF6c3BxdGlsd2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTIwMzcsImV4cCI6MjA5NTU2ODAzN30.YFCxPdCTX_HhBXecLlzTKKeSK9Z7roTb4b80z0A8-KE";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const PASSWORD = "science123"; // change this
@@ -34,17 +34,25 @@ export default function Blog() {
   const [editDraft, setEditDraft] = useState(null);
 
   useEffect(() => {
-    fetchPosts();
-    const a = localStorage.getItem("about-v1");
-    if (a) setAbout(a);
-    const b = localStorage.getItem("blogname-v1");
-    if (b) setBlogName(b);
+    fetchAll();
   }, []);
 
-  const fetchPosts = async () => {
-    const { data } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
-    if (data) setPosts(data);
+  const fetchAll = async () => {
+    const { data: postsData } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+    if (postsData) setPosts(postsData);
+
+    const { data: settingsData } = await supabase.from("settings").select("*");
+    if (settingsData) {
+      const aboutRow = settingsData.find((r) => r.key === "about");
+      const nameRow = settingsData.find((r) => r.key === "blogname");
+      if (aboutRow) setAbout(aboutRow.value);
+      if (nameRow) setBlogName(nameRow.value);
+    }
     setLoaded(true);
+  };
+
+  const saveSetting = async (key, value) => {
+    await supabase.from("settings").upsert({ key, value }, { onConflict: "key" });
   };
 
   const today = () => new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -128,7 +136,7 @@ export default function Blog() {
                     if (e.key === "Enter") {
                       const val = blogNameDraft.trim() || DEFAULT_BLOG_NAME;
                       setBlogName(val);
-                      localStorage.setItem("blogname-v1", val);
+                      saveSetting("blogname", val);
                       setEditingBlogName(false);
                     }
                     if (e.key === "Escape") setEditingBlogName(false);
@@ -137,7 +145,7 @@ export default function Blog() {
                 <button className="subtle-btn" onClick={() => {
                   const val = blogNameDraft.trim() || DEFAULT_BLOG_NAME;
                   setBlogName(val);
-                  localStorage.setItem("blogname-v1", val);
+                  saveSetting("blogname", val);
                   setEditingBlogName(false);
                 }}>Save</button>
                 <button className="subtle-btn" onClick={() => setEditingBlogName(false)}>Cancel</button>
@@ -196,7 +204,7 @@ export default function Blog() {
                   <button style={{ ...s.btn, ...s.darkBtn }} onClick={() => {
                     const val = aboutDraft.trim() || DEFAULT_ABOUT;
                     setAbout(val);
-                    localStorage.setItem("about-v1", val);
+                    saveSetting("about", val);
                     setEditingAbout(false);
                   }}>Save</button>
                   <button style={s.btn} onClick={() => setEditingAbout(false)}>Cancel</button>
