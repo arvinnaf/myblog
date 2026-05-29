@@ -231,7 +231,7 @@ export default function Blog() {
               <label style={s.label}>Image URL <span style={s.labelNote}>(optional)</span></label>
               <input style={s.lineInput} placeholder="https://..." value={newImage} onChange={(e) => setNewImage(e.target.value)} />
             </div>
-            {newImage && <img src={newImage} alt="" style={s.imgPreview} onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; }} />}
+            {newImage && <img src={newImage} alt="" style={s.imgPreview} onError={(e) => { e.target.style.display = "none"; }} />}
             <button style={{ ...s.btn, ...s.darkBtn, opacity: newTitle && newBody ? 1 : 0.4 }} onClick={publish}>Publish</button>
           </div>
         )}
@@ -255,7 +255,7 @@ export default function Blog() {
               <label style={s.label}>Image URL <span style={s.labelNote}>(optional)</span></label>
               <input style={s.lineInput} value={editDraft.image} onChange={(e) => setEditDraft({ ...editDraft, image: e.target.value })} />
             </div>
-            {editDraft.image && <img src={editDraft.image} alt="" style={s.imgPreview} onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; }} />}
+            {editDraft.image && <img src={editDraft.image} alt="" style={s.imgPreview} onError={(e) => { e.target.style.display = "none"; }} />}
             <button style={{ ...s.btn, ...s.darkBtn, opacity: editDraft.title && editDraft.body ? 1 : 0.4 }} onClick={saveEdit}>Save changes</button>
           </div>
         )}
@@ -265,7 +265,7 @@ export default function Blog() {
             <button className="subtle-btn" style={{ marginBottom: 32 }} onClick={() => setView("feed")}>← Back</button>
             <p style={s.detailDate}>{active.date}</p>
             <h1 style={s.detailTitle}>{active.title}</h1>
-            {active.image && <img src={active.image} alt="" style={s.detailImg} onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; }} />}
+            {active.image && <img src={active.image} alt="" style={s.detailImg} onError={(e) => { e.target.style.display = "none"; }} />}
             <p style={s.bodyText}>{active.body}</p>
             {authed && (
               <div style={{ display: "flex", gap: 20, marginTop: 48 }}>
@@ -281,7 +281,7 @@ export default function Blog() {
             {posts.length === 0 && <p style={{ fontSize: 14, color: "#aaa", paddingTop: 20 }}>No posts yet.</p>}
             {posts.map((p) => (
               <div key={p.id} className="card" style={s.card} onClick={() => { setActive(p); setView("post"); }}>
-                {p.image && <img src={p.image} alt="" style={s.cardImg} onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; }} />}
+                {p.image && <img src={p.image} alt="" style={s.cardImg} onError={(e) => { e.target.style.display = "none"; }} />}
                 <p style={s.cardDate}>{p.date}</p>
                 <h2 style={s.cardTitle}>{p.title}</h2>
                 <p style={s.cardExcerpt}>{p.body.slice(0, 160)}{p.body.length > 160 ? "..." : ""}</p>
@@ -346,4 +346,4 @@ const s = {
   detailTitle: { fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 600, color: "#1a1a1a", lineHeight: 1.3, marginBottom: 24 },
   detailImg: { width: "100%", borderRadius: 6, marginBottom: 28, display: "block" },
   bodyText: { fontSize: 15, color: "#444", lineHeight: 1.85, fontWeight: 300, whiteSpace: "pre-wrap" },
-};s
+};
