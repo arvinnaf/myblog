@@ -41,10 +41,10 @@ export default function Blog() {
     const { data: postsData } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
     if (postsData) setPosts(postsData);
 
-    const { data: settingsData } = await supabase.from("settings").select("*");
+    const { data: settingsData, error: se } = await supabase.from("settings").select("*"); console.log("SETTINGS:", { settingsData, se });
     if (settingsData) {
-      const aboutRow = settingsData.find((r) => r.key === "about");
-      const nameRow = settingsData.find((r) => r.key === "blogname");
+      const aboutRow = settingsData.find((r) => r.setting_key === "about");
+      const nameRow = settingsData.find((r) => r.setting_key === "blogname");
       if (aboutRow) setAbout(aboutRow.value);
       if (nameRow) setBlogName(nameRow.value);
     }
@@ -52,7 +52,7 @@ export default function Blog() {
   };
 
   const saveSetting = async (key, value) => {
-    await supabase.from("settings").upsert({ key, value }, { onConflict: "key" });
+    const { data: ud, error: ue } = await supabase.from("settings").upsert({ setting_key: key, value }, { onConflict: "setting_key" }).select(); console.log("UPSERT RESULT:", { ud, ue });
   };
 
   const today = () => new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
